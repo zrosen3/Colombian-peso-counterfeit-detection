@@ -43,6 +43,7 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
     )
     return (train_ds, test_ds, validation_ds, train_ds.class_names)
 
+
 def PeakData(dataset: tf.data.Dataset,
              class_names: list,
              nrows: int = 3,
