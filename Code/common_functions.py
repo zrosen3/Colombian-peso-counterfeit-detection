@@ -2,7 +2,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, color: str = "rgb") -> tuple:
+def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, color: str = "rgb", shuffle = True, batch_size = 32) -> tuple:
     """
     Load all the images in the given dataset folder. Since all the images in the
     dataset are already split in separate folders, this function
@@ -12,13 +12,14 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
     Args:
         image_size: size the images will be processed into (h,w) 
             (default = (480,640))
-        seed: random seed to shuffle the dataset with. Use `None` if randomizing
-            is not required. (default = 1234)
+        seed: random seed to shuffle the dataset with. Use `None` if do not need reproducibility
+        . (default = 1234)
         ds_num: the dataset number corrisponding to the folder to extract the
             dataset from. (ex. 1 = "ds1") (default = 1)
         color: the color to process the images as. ("rgb", "rgba", "grayscale)
             (default = "rbg")
-    
+        shuffle: Whether or not to shuffle the dataset.
+        batch_size: Default batch size for loading in the datasets, default is 32.
     Returns:
         `tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset, list[string]]`
         where it is (Train, Test, Validation, and class names) respectively
@@ -28,18 +29,24 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
         image_size=image_size,
         color_mode=color,
         seed=seed,
+        shuffle = shuffle,
+        batch_size = batch_size
     )
     test_ds = tf.keras.utils.image_dataset_from_directory(
         f"../Data/Original/ds{ds_num}/Test/",
         image_size=image_size,
         color_mode=color,
         seed=seed,
+        shuffle = shuffle, 
+        batch_size = batch_size
     )
     validation_ds = tf.keras.utils.image_dataset_from_directory(
         f"../Data/Original/ds{ds_num}/Validation/",
         image_size=image_size,
         color_mode=color,
         seed=seed,
+        shuffle = shuffle,
+        batch_size = batch_size 
     )
     return (train_ds, test_ds, validation_ds, train_ds.class_names)
 
