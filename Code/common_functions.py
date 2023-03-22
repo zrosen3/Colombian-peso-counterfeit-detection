@@ -50,7 +50,6 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
     )
     return (train_ds, test_ds, validation_ds, train_ds.class_names)
 
-
 def PeakData(dataset: tf.data.Dataset,
              class_names: list,
              nrows: int = 3,
@@ -76,48 +75,6 @@ def PeakData(dataset: tf.data.Dataset,
             plt.title(class_names[labels[i]] if prediction_labels == None else f"pred: {class_names[prediction_labels[i]]} | actual: {class_names[labels[i]]}")
             plt.axis("off")
     plt.show()
-
-def MakeModel(class_names: list) -> tf.keras.Sequential:
-    """
-    Simple straight forward CNN model. this is just for simplicity and testing
-    atm. I will make it more modular later once I know what we are doing
-
-    Args:
-        class_names: list of the classification names
-    
-    Returns:
-        `tf.keras.Sequential` - a constructed tf model
-    """
-    tf.keras.backend.clear_session()
-
-    model = tf.keras.Sequential([
-        tf.keras.layers.Rescaling(1./255),
-        tf.keras.layers.Conv2D(32, 3, activation='relu'),
-        tf.keras.layers.MaxPooling2D(),
-        tf.keras.layers.Conv2D(32, 3, activation='relu'),
-        tf.keras.layers.MaxPooling2D(),
-        tf.keras.layers.Conv2D(32, 3, activation='relu'),
-        tf.keras.layers.MaxPooling2D(),
-        tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dense(len(class_names))
-        # tf.keras.layers.Rescaling(1./255),
-        # tf.keras.layers.Conv2D(32, 3, activation='relu'),
-        # tf.keras.layers.MaxPooling2D(),
-        # tf.keras.layers.Conv2D(64, 3, activation='relu'),
-        # tf.keras.layers.MaxPooling2D(),
-        # tf.keras.layers.Flatten(),
-        # tf.keras.layers.Dense(128, activation='relu'),
-        # tf.keras.layers.Dense(len(class_names))
-    ])
-
-    model.compile(
-        optimizer='adam',
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-        metrics=['accuracy']
-    )
-
-    return model
 
 def ExtractLabels(dataset: tf.data.Dataset) -> list:
     """
