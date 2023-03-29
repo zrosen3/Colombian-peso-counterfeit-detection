@@ -144,7 +144,7 @@ def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history:
     print(f"Test loss: {test_loss} | Test accuracy: {test_acc}")
 
     
-def PrecisionRecall (model: tf.Keras.Sequential, test_ds:tf.data.Dataset, history: tf.keras.callbacks.History) -> None:
+def PrecisionRecall (model: tf.keras.Sequential, test_ds:tf.data.Dataset, history: tf.keras.callbacks.History) -> None:
     """
     Calculate precision and recall on the test dataset two ways.
     Micro averaged precision: calculate precision for all classes, take average. 
