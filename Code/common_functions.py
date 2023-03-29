@@ -1,6 +1,8 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn import metrics
+import numpy as np
 
 def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, color: str = "rgb", shuffle = True, batch_size = 32) -> tuple:
     """
@@ -124,7 +126,7 @@ def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history:
     """
     Take the model and plot the training accuracy and validation accuracy. Also,
     Perform a evaluation on the test data and print the loss and accuracy.
-
+    Additionally, print the precision and recall. 
     Args:
         model: the model to test
         test_ds: the test dataset to evaluate the model with
@@ -140,3 +142,68 @@ def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history:
 
     test_loss, test_acc = model.evaluate(test_ds, verbose=2)
     print(f"Test loss: {test_loss} | Test accuracy: {test_acc}")
+
+    
+def PrecisionRecall (model: tf.Keras.Sequential, test_ds:tf.data.Dataset, history: tf.keras.callbacks.History) -> None:
+    """
+    Calculate precision and recall on the test dataset two ways.
+    Micro averaged precision: calculate precision for all classes, take average. 
+    Treats all classes equally, gives idea of overall performance.
+    Macro averaged precision: calculate class wise TP and FN, use to calculate overall precision. 
+    Better for evaluating the model's performance across each class separately. 
+    Plot confusion matrix to visualize precision/recall
+    Also plot ROC curve
+    Args:
+        model: the model to test
+        test_ds: the test dataset to evaluate the model with
+        history: the history from fitting the model
+    """
+    #Design 
+    y_pred_probs = model.predict(test_ds)
+    y_pred = np.argmax(y_pred_probs, axis = 1)
+    y_test = np.concatenate([y for x,y in test_ds], axis = 0)
+        
+    #Calculate micro averaged precision and recall
+    micro_averaged_precision = metrics.precision_score(y_test, y_pred, average = 'micro')
+    micro_averaged_recall = metrics.recall_score(y_test, y_pred, average = 'micro')
+
+    
+    #Calculate macro averaged precision and recall
+    macro_averaged_precision = metrics.precision_score(y_test, y_pred, average = 'macro')
+    macro_averaged_recall = metrics.recall_score(y_test, y_pred, average = 'macro')
+    
+    #Print results
+    print(f"Micro averaged precision score: {micro_averaged_precision}")
+    print(f"Macro averaged precision score: {macro_averaged_precision}")
+    print(f"Micro averaged recall score: {micro_averaged_recall}")
+    print(f"Macro averaged recall score: {macro_averaged_recall}")
+
+
+    
+    #Plot confusion matrix
+    cm = metrics.confusion_matrix(y_test, y_pred)
+    
+    # Plot the confusion matrix as a heatmap
+    plt.figure(figsize=(8, 8))
+    sns.heatmap(cm, annot=True, cmap='Blues', fmt='g')
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.show()
+        
+    # Calculate the overall ROC curve using micro-averaging
+    fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred_probs.ravel())
+    roc_auc = metrics.auc(fpr, tpr)
+    
+    # Plot the ROC curve
+    plt.figure(figsize=(8, 8))
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic')
+    plt.legend(loc="lower right")
+    plt.show()
+        
+
