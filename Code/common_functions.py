@@ -126,7 +126,6 @@ def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history:
     """
     Take the model and plot the training accuracy and validation accuracy. Also,
     Perform a evaluation on the test data and print the loss and accuracy.
-    Additionally, print the precision and recall. 
     Args:
         model: the model to test
         test_ds: the test dataset to evaluate the model with
@@ -205,7 +204,7 @@ def ConfusionMatrix (y_test:np.array, y_pred:np.array) -> None:
         
 
 
-def micro_average_ROC(y_pred_probs: np.array, y_test:np.array, y_pred:np.array) -> None:
+def micro_averaged_ROC(y_pred_probs: np.array, y_test:np.array, y_pred:np.array) -> None:
     """
     Uses micro averaging to create one plot showing the total precision/recall curve 
     Args:
@@ -231,7 +230,7 @@ def micro_average_ROC(y_pred_probs: np.array, y_test:np.array, y_pred:np.array) 
         
     
 
-def individual_rocs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
+def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
     """
     Plots the ROC curve for each class
     Args:
@@ -269,7 +268,7 @@ def individual_rocs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -
     plt.legend(loc="lower right")
     plt.show()
     
-def macro_averaged_roc(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
+def macro_averaged_ROC(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
     """
     Plots the macro averaged ROC curve
     Args: 
@@ -306,6 +305,17 @@ def macro_averaged_roc(y_pred_probs:np.array, y_test: np.array, y_pred: np.array
     
     plt.plot([0, 1], [0, 1], 'k--')
 
+def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.Data.Dataset) -> None:
+    """
+    Runs functions for calculating and visualizating precision and recall
+    """
+    y_pred_probs, y_test, y_pred = ExtractPredictions(model, test_ds)
+    PrecisionRecallScores(y_test, y_pred)
+    ConfusionMatrix(y_test, y_pred)
+    micro_averaged_ROC(y_pred_probs, y_test, y_pred)
+    individual_ROCs(y_pred_probs, y_test, y_pred)
+    micro_averaged_ROC(y_pred_probs, y_test, y_pred)
     
+
     
 
