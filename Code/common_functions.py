@@ -4,6 +4,8 @@ import seaborn as sns
 from sklearn import metrics
 import numpy as np
 
+
+
 def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, color: str = "rgb", shuffle = True, batch_size = 32) -> tuple:
     """
     Load all the images in the given dataset folder. Since all the images in the
@@ -131,20 +133,41 @@ def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history:
         model: the model to test
         test_ds: the test dataset to evaluate the model with
         history: the history from fitting the model
+    Returns:
+        Tuple[float, float, float]
+        (Train accuracy, Validation accuracy, Test accuracy)
     """
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.ylim([0.5, 1])
-    plt.legend(loc='lower right')
+    # plt.plot(history.history['accuracy'], label='accuracy')
+    # plt.plot(history.history['val_accuracy'], label = 'val_accuracy')
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Accuracy')
+    # plt.ylim([0.5, 1])
+    # plt.legend(loc='lower right')
+    # plt.show()
+    hist = history.history
+    x_arr = np.arange(len(hist['loss'])) + 1
+
+    fig = plt.figure(figsize=(12, 4))
+    ax = fig.add_subplot(1, 2, 1)
+    ax.plot(x_arr, hist['loss'], '-o', label='Train loss')
+    ax.plot(x_arr, hist['val_loss'], '--<', label='Validation loss')
+    ax.legend(fontsize=15)
+    ax.set_xlabel('Epoch', size=15)
+    ax.set_ylabel('Loss', size=15)
+
+    ax = fig.add_subplot(1, 2, 2)
+    ax.plot(x_arr, hist['accuracy'], '-o', label='Train acc.')
+    ax.plot(x_arr, hist['val_accuracy'], '--<', label='Validation acc.')
+    ax.legend(fontsize=15)
+    ax.set_xlabel('Epoch', size=15)
+    ax.set_ylabel('Accuracy', size=15)
     plt.show()
 
     test_loss, test_acc = model.evaluate(test_ds, verbose=2)
     print(f"Test loss: {test_loss} | Test accuracy: {test_acc}")
-
-    
-def PrecisionRecall (model: tf.Keras.Sequential, test_ds:tf.data.Dataset, history: tf.keras.callbacks.History) -> None:
+    return hist['accuracy'][-1], hist['val_accuracy'][-1], test_acc
+   
+def PrecisionRecall (model: tf.keras.Sequential, test_ds:tf.data.Dataset, history: tf.keras.callbacks.History) -> None:
     """
     Calculate precision and recall on the test dataset two ways.
     Micro averaged precision: calculate precision for all classes, take average. 
@@ -206,4 +229,20 @@ def PrecisionRecall (model: tf.Keras.Sequential, test_ds:tf.data.Dataset, histor
     plt.legend(loc="lower right")
     plt.show()
         
-
+def AugmentImage(brightness: float = 0.0, contrast: int = 1, flip: bool = False, hue: float = 0.0, gamma: int = 1, saturation: float = 0.0):
+    def AugmentImageHelper(x, y):
+        aug = x
+        if hue != 0.0:
+            aug = tf.image.adjust_hue(aug, hue)
+        if brightness != 0.0:
+            aug = tf.image.adjust_brightness(aug, delta=brightness)
+        if gamma != 1:
+            aug = tf.image.adjust_gamma(aug, gamma=gamma)
+        if contrast != 1:
+            aug = tf.image.adjust_contrast(aug, contrast_factor=contrast)
+        if saturation != 0.0:
+            aug = tf.image.adjust_saturation(aug, saturation_factor=saturation)
+        if flip:
+            aug = tf.image.random_flip_left_right(aug)
+        return aug, y
+    return AugmentImageHelper
