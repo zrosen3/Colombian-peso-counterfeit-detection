@@ -128,7 +128,6 @@ def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history:
     """
     Take the model and plot the training accuracy and validation accuracy. Also,
     Perform a evaluation on the test data and print the loss and accuracy.
-    Additionally, print the precision and recall. 
     Args:
         model: the model to test
         test_ds: the test dataset to evaluate the model with
@@ -166,53 +165,74 @@ def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history:
     test_loss, test_acc = model.evaluate(test_ds, verbose=2)
     print(f"Test loss: {test_loss} | Test accuracy: {test_acc}")
     return hist['accuracy'][-1], hist['val_accuracy'][-1], test_acc
-   
-def PrecisionRecall (model: tf.keras.Sequential, test_ds:tf.data.Dataset, history: tf.keras.callbacks.History) -> None:
+
+
+def ExtractPredictions(model: tf.keras.Sequential, test_ds: tf.Data.Dataset) -> tuple:
     """
-    Calculate precision and recall on the test dataset two ways.
-    Micro averaged precision: calculate precision for all classes, take average. 
-    Treats all classes equally, gives idea of overall performance.
-    Macro averaged precision: calculate class wise TP and FN, use to calculate overall precision. 
-    Better for evaluating the model's performance across each class separately. 
-    Plot confusion matrix to visualize precision/recall
-    Also plot ROC curve
+    Extract prediction and test vectors from tensorflow dataset
     Args:
         model: the model to test
-        test_ds: the test dataset to evaluate the model with
-        history: the history from fitting the model
+        test_ds: the test dataset to evaluate the model with 
     """
-    #Design 
     y_pred_probs = model.predict(test_ds)
     y_pred = np.argmax(y_pred_probs, axis = 1)
     y_test = np.concatenate([y for x,y in test_ds], axis = 0)
-        
+    return (y_pred_probs, y_test, y_pred)
+    
+def PrecisionRecallScores (y_test:np.array, y_pred:np.array) -> None:
+    """
+    Calculate precision, recall, and F1 score on the test dataset two ways.
+    Micro averaged: calculate precision/recall for all classes, take average. 
+    Treats all classes equally, gives idea of overall performance.
+    Macro averaged precision: calculate class wise TP and FN, use to calculate overall precision and recall. 
+    Better for evaluating the model's performance across each class separately. 
+    F1 score is the harmonic mean of precision and recall
+
+    Args:
+        y_test: the array of actual class values
+        y_pred: the array of predicted class values
+    """       
     #Calculate micro averaged precision and recall
     micro_averaged_precision = metrics.precision_score(y_test, y_pred, average = 'micro')
     micro_averaged_recall = metrics.recall_score(y_test, y_pred, average = 'micro')
-
+    micro_averaged_f1score = metrics.f1_score(y_test, y_pred, average = 'micro')
     
     #Calculate macro averaged precision and recall
     macro_averaged_precision = metrics.precision_score(y_test, y_pred, average = 'macro')
     macro_averaged_recall = metrics.recall_score(y_test, y_pred, average = 'macro')
+    macro_averaged_f1score = metrics.f1_score(y_test, y_pred, average = 'macro')
     
     #Print results
     print(f"Micro averaged precision score: {micro_averaged_precision}")
     print(f"Macro averaged precision score: {macro_averaged_precision}")
     print(f"Micro averaged recall score: {micro_averaged_recall}")
     print(f"Macro averaged recall score: {macro_averaged_recall}")
+    print(f"Micro averaged F1 score: {micro_averaged_f1score}")
+    print(f"Macro averaged F1 score: {macro_averaged_f1score}")
 
+def ConfusionMatrix (y_test:np.array, y_pred:np.array) -> None:
+    """
+    Prints a confusion matrix comparing predictions versus results in a heatmap
+    Args:
+        y_test: the array of actual class values
+        y_pred: the array of predicted class values
+    """
 
-    
-    #Plot confusion matrix
     cm = metrics.confusion_matrix(y_test, y_pred)
-    
-    # Plot the confusion matrix as a heatmap
     plt.figure(figsize=(8, 8))
     sns.heatmap(cm, annot=True, cmap='Blues', fmt='g')
     plt.xlabel('Predicted')
     plt.ylabel('True')
     plt.show()
         
+def micro_averaged_ROC(y_pred_probs: np.array, y_test:np.array, y_pred:np.array) -> None:
+    """
+    Uses micro averaging to create one plot showing the total precision/recall curve 
+    Args:
+        y_pred_probs: the array of class probabilities
+        y_test: the array of actual class values
+        y_pred: the array of predicted class values
+    """
     # Calculate the overall ROC curve using micro-averaging
     fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred_probs.ravel())
     roc_auc = metrics.auc(fpr, tpr)
@@ -246,3 +266,96 @@ def AugmentImage(brightness: float = 0.0, contrast: int = 1, flip: bool = False,
             aug = tf.image.random_flip_left_right(aug)
         return aug, y
     return AugmentImageHelper
+
+def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
+    """
+    Plots the ROC curve for each class
+    Args:
+        y_pred_probs: the array of class probabilities 
+        y_test: the array of actual class values
+        y_pred: the array of predicted class values
+    """
+    
+    # Compute ROC curve and ROC area for each class
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    n_classes = y_test.shape[1]
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = metrics.roc_curve(y_test[:, i], y_pred_probs[:, i])
+        roc_auc[i] = metrics.auc(fpr[i], tpr[i])
+    
+    ##Plot the ROC curve for each class
+    plt.figure(figsize=(8, 8))
+    colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black', 'gray', 'orange', 'brown', 'pink', 'olive', 'purple']
+    for i, color in zip(range(n_classes), colors):
+        plt.plot(fpr[i], tpr[i], color=color, lw=2,
+                 label='ROC curve of class {0} (area = {1:0.2f})'
+                 ''.format(i, roc_auc[i]))
+    
+    # Plot the diagonal line representing the random classifier
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    
+    # Customize the plot
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic (ROC) Curve for Each Class')
+    plt.legend(loc="lower right")
+    plt.show()
+    
+def macro_averaged_ROC(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
+    """
+    Plots the macro averaged ROC curve
+    Args: 
+        y_pred_probs: the array of class probabilities
+        y_test: the array of actual class values
+        y_pred: the array of predicted class values
+    """
+
+    # Calculate the ROC curve for each class separately and take the average
+    n_classes = y_pred_probs.shape[1]
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = metrics.roc_curve(y_test == i, y_pred_probs[:, i])
+        roc_auc[i] = metrics.auc(fpr[i], tpr[i])
+    
+    # Compute macro-average ROC curve and ROC area
+    fpr["macro"], tpr["macro"], _ = metrics.roc_curve(y_test.ravel(), y_pred_probs.ravel())
+    roc_auc["macro"] = metrics.auc(fpr["macro"], tpr["macro"])
+    
+    # Plot the ROC curve
+    plt.figure(figsize=(8, 8))
+    plt.plot(fpr["macro"], tpr["macro"],
+             label='macro-average ROC curve (area = {0:0.2f})'
+                   ''.format(roc_auc["macro"]),
+             color='navy', linestyle='-', linewidth=2)
+    
+    colors = ['aqua', 'darkorange', 'cornflowerblue', 'green']
+    for i, color in zip(range(n_classes), colors):
+        plt.plot(fpr[i], tpr[i], color=color, lw=2,
+                 label='ROC curve of class {0} (area = {1:0.2f})'
+                 ''.format(i, roc_auc[i]))
+    
+    plt.plot([0, 1], [0, 1], 'k--')
+
+def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Dataset) -> None:
+    """
+    Runs functions for calculating and visualizating precision and recall
+    Args:
+        model: the model to test
+        test_ds: the test dataset to evaluate the model with 
+    """
+    y_pred_probs, y_test, y_pred = ExtractPredictions(model, test_ds)
+    PrecisionRecallScores(y_test, y_pred)
+    ConfusionMatrix(y_test, y_pred)
+    micro_averaged_ROC(y_pred_probs, y_test, y_pred)
+    individual_ROCs(y_pred_probs, y_test, y_pred)
+    micro_averaged_ROC(y_pred_probs, y_test, y_pred)
+    
+
+    
+
