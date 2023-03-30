@@ -305,7 +305,7 @@ def macro_averaged_ROC(y_pred_probs:np.array, y_test: np.array, y_pred: np.array
     
     plt.plot([0, 1], [0, 1], 'k--')
 
-def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.Data.Dataset) -> None:
+def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Dataset) -> None:
     """
     Runs functions for calculating and visualizating precision and recall
     Args:
