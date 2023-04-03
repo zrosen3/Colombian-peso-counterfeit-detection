@@ -167,7 +167,7 @@ def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history:
     return hist['accuracy'][-1], hist['val_accuracy'][-1], test_acc
 
 
-def ExtractPredictions(model: tf.keras.Sequential, test_ds: tf.Data.Dataset) -> tuple:
+def ExtractPredictions(model: tf.keras.Sequential, test_ds: tf.data.Dataset) -> tuple:
     """
     Extract prediction and test vectors from tensorflow dataset
     Args:
