@@ -231,7 +231,7 @@ def AugmentImage(brightness: float = 0.0, contrast: int = 1, flip: bool = False,
         return aug, y
     return AugmentImageHelper
 
-def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
+def individual_ROCs(y_pred_probs: np.array, y_test: np.array, y_pred: np.array) -> None:
     """
     Plots the ROC curve for each class
     Args:
@@ -241,15 +241,17 @@ def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -
     """
     
     # Compute ROC curve and ROC area for each class
+    n_classes = y_pred_probs.shape[1]
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-    n_classes = len(np.unique(y_test))
     for i in range(n_classes):
-        fpr[i], tpr[i], _ = metrics.roc_curve(y_test[:, i], y_pred_probs[:, i])
+        y_test_i = (y_test == i).astype(int)
+        y_pred_probs_i = y_pred_probs[:, i]
+        fpr[i], tpr[i], _ = metrics.roc_curve(y_test_i, y_pred_probs_i)
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
     
-    ##Plot the ROC curve for each class
+    # Plot the ROC curve for each class
     plt.figure(figsize=(8, 8))
     colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black', 'gray', 'orange', 'brown', 'pink', 'olive', 'purple']
     for i, color in zip(range(n_classes), colors):
@@ -260,12 +262,12 @@ def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -
     # Plot the diagonal line representing the random classifier
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
     
-    # Customize the plot
+    # Set plot parameters
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic (ROC) Curve for Each Class')
+    plt.title('Receiver Operating Characteristic Curve')
     plt.legend(loc="lower right")
     plt.show()
     
