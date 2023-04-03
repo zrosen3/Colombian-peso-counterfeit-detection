@@ -124,6 +124,7 @@ def ConfusionMatrix(class_names: list, true_labels: list, predicted_labels: list
     ax.set(xlabel='Predicted Label', ylabel='True Label')
     plt.show()
 
+
 def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history: tf.keras.callbacks.History) -> None:
     """
     Take the model and plot the training accuracy and validation accuracy. Also,
@@ -174,10 +175,17 @@ def ExtractPredictions(model: tf.keras.Sequential, test_ds: tf.data.Dataset) -> 
         model: the model to test
         test_ds: the test dataset to evaluate the model with 
     """
-    y_pred_probs = model.predict(test_ds)
-    y_pred = np.argmax(y_pred_probs, axis = 1)
-    y_test = np.concatenate([y for x,y in test_ds], axis = 0)
-    return (y_pred_probs, y_test, y_pred)
+    y_pred_probs = []
+    y_test = []
+    for batch in test_ds.as_numpy_iterator():
+        x_batch, y_batch = batch
+        y_pred_batch = model.predict(x_batch)
+        y_pred_probs.append(y_pred_batch)
+        y_test.append(y_batch)
+    y_pred_probs = np.concatenate(y_pred_probs, axis=0)
+    y_pred = np.argmax(y_pred_probs, axis=1)
+    y_test = np.concatenate(y_test, axis=0)
+    return (y_pred_probs, y_pred, y_test)
     
 def PrecisionRecallScores (y_test:np.array, y_pred:np.array) -> None:
     """
@@ -204,20 +212,6 @@ def PrecisionRecallScores (y_test:np.array, y_pred:np.array) -> None:
     print(f"Macro averaged recall score: {macro_averaged_recall}")
     print(f"Macro averaged F1 score: {macro_averaged_f1score}")
 
-def ConfusionMatrix (y_test:np.array, y_pred:np.array) -> None:
-    """
-    Prints a confusion matrix comparing predictions versus results in a heatmap
-    Args:
-        y_test: the array of actual class values
-        y_pred: the array of predicted class values
-    """
-
-    cm = metrics.confusion_matrix(y_test, y_pred)
-    plt.figure(figsize=(8, 8))
-    sns.heatmap(cm, annot=True, cmap='Blues', fmt='g')
-    plt.xlabel('Predicted')
-    plt.ylabel('True')
-    plt.show()
         
 def AugmentImage(brightness: float = 0.0, contrast: int = 1, flip: bool = False, hue: float = 0.0, gamma: int = 1, saturation: float = 0.0):
     def AugmentImageHelper(x, y):
@@ -312,16 +306,16 @@ def macro_averaged_ROC(y_pred_probs:np.array, y_test: np.array, y_pred: np.array
     
     plt.plot([0, 1], [0, 1], 'k--')
 
-def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Dataset) -> None:
+def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Dataset, class_names:str) -> None:
     """
     Runs functions for calculating and visualizating precision and recall
     Args:
         model: the model to test
         test_ds: the test dataset to evaluate the model with 
     """
-    y_pred_probs, y_test, y_pred = ExtractPredictions(model, test_ds)
+    y_pred_probs, y_test, y_pred, class_names = ExtractPredictions(model, test_ds)
     PrecisionRecallScores(y_test, y_pred)
-    ConfusionMatrix(y_test, y_pred)
+    ConfusionMatrix(class_names, y_test, y_pred)
     individual_ROCs(y_pred_probs, y_test, y_pred)
     macro_averaged_ROC(y_pred_probs, y_test, y_pred)
     
