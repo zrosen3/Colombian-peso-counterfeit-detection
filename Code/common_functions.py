@@ -179,7 +179,7 @@ def ExtractPredictions(model: tf.keras.Sequential, test_ds: tf.data.Dataset) -> 
     y_test = []
     for batch in test_ds.as_numpy_iterator():
         x_batch, y_batch = batch
-        y_pred_batch = model.predict(x_batch)
+        y_pred_batch = model.predict(x_batch, verbose = 0)
         y_pred_probs.append(y_pred_batch)
         y_test.append(y_batch)
     y_pred_probs = np.concatenate(y_pred_probs, axis=0)
@@ -244,7 +244,7 @@ def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-    n_classes = y_test.shape[1]
+    n_classes = len(np.unique(y_test))
     for i in range(n_classes):
         fpr[i], tpr[i], _ = metrics.roc_curve(y_test[:, i], y_pred_probs[:, i])
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
