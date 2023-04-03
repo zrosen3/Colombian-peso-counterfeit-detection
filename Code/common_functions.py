@@ -241,7 +241,7 @@ def individual_ROCs(y_pred_probs: np.array, y_test: np.array, y_pred: np.array) 
     """
     
     # Compute ROC curve and ROC area for each class
-    n_classes = y_pred_probs.shape[1]
+    n_classes = 13
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
@@ -281,7 +281,7 @@ def macro_averaged_ROC(y_pred_probs:np.array, y_test: np.array, y_pred: np.array
     """
 
     # Calculate the ROC curve for each class separately and take the average
-    n_classes = len(np.unique(y_test))
+    n_classes = 13
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
