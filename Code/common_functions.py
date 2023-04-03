@@ -181,21 +181,18 @@ def ExtractPredictions(model: tf.keras.Sequential, test_ds: tf.data.Dataset) -> 
     
 def PrecisionRecallScores (y_test:np.array, y_pred:np.array) -> None:
     """
-    Calculate precision, recall, and F1 score on the test dataset two ways.
-    Micro averaged: calculate precision/recall for all classes, take average. 
+    Calculate precision, recall, and F1 score on the test dataset.
+    Micro averaged precision: calculate precision/recall for all classes, take average. 
     Treats all classes equally, gives idea of overall performance.
     Macro averaged precision: calculate class wise TP and FN, use to calculate overall precision and recall. 
     Better for evaluating the model's performance across each class separately. 
+    Since our classes are balanced, we will use macro averaging.
     F1 score is the harmonic mean of precision and recall
 
     Args:
         y_test: the array of actual class values
         y_pred: the array of predicted class values
     """       
-    #Calculate micro averaged precision and recall
-    micro_averaged_precision = metrics.precision_score(y_test, y_pred, average = 'micro')
-    micro_averaged_recall = metrics.recall_score(y_test, y_pred, average = 'micro')
-    micro_averaged_f1score = metrics.f1_score(y_test, y_pred, average = 'micro')
     
     #Calculate macro averaged precision and recall
     macro_averaged_precision = metrics.precision_score(y_test, y_pred, average = 'macro')
@@ -203,11 +200,8 @@ def PrecisionRecallScores (y_test:np.array, y_pred:np.array) -> None:
     macro_averaged_f1score = metrics.f1_score(y_test, y_pred, average = 'macro')
     
     #Print results
-    print(f"Micro averaged precision score: {micro_averaged_precision}")
     print(f"Macro averaged precision score: {macro_averaged_precision}")
-    print(f"Micro averaged recall score: {micro_averaged_recall}")
     print(f"Macro averaged recall score: {macro_averaged_recall}")
-    print(f"Micro averaged F1 score: {micro_averaged_f1score}")
     print(f"Macro averaged F1 score: {macro_averaged_f1score}")
 
 def ConfusionMatrix (y_test:np.array, y_pred:np.array) -> None:
@@ -223,30 +217,6 @@ def ConfusionMatrix (y_test:np.array, y_pred:np.array) -> None:
     sns.heatmap(cm, annot=True, cmap='Blues', fmt='g')
     plt.xlabel('Predicted')
     plt.ylabel('True')
-    plt.show()
-        
-def micro_averaged_ROC(y_pred_probs: np.array, y_test:np.array, y_pred:np.array) -> None:
-    """
-    Uses micro averaging to create one plot showing the total precision/recall curve 
-    Args:
-        y_pred_probs: the array of class probabilities
-        y_test: the array of actual class values
-        y_pred: the array of predicted class values
-    """
-    # Calculate the overall ROC curve using micro-averaging
-    fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred_probs.ravel())
-    roc_auc = metrics.auc(fpr, tpr)
-    
-    # Plot the ROC curve
-    plt.figure(figsize=(8, 8))
-    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic')
-    plt.legend(loc="lower right")
     plt.show()
         
 def AugmentImage(brightness: float = 0.0, contrast: int = 1, flip: bool = False, hue: float = 0.0, gamma: int = 1, saturation: float = 0.0):
@@ -352,9 +322,8 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
     y_pred_probs, y_test, y_pred = ExtractPredictions(model, test_ds)
     PrecisionRecallScores(y_test, y_pred)
     ConfusionMatrix(y_test, y_pred)
-    micro_averaged_ROC(y_pred_probs, y_test, y_pred)
     individual_ROCs(y_pred_probs, y_test, y_pred)
-    micro_averaged_ROC(y_pred_probs, y_test, y_pred)
+    macro_averaged_ROC(y_pred_probs, y_test, y_pred)
     
 
     
