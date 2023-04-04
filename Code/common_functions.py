@@ -231,7 +231,7 @@ def AugmentImage(brightness: float = 0.0, contrast: int = 1, flip: bool = False,
         return aug, y
     return AugmentImageHelper
 
-def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
+def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_names: str) -> None:
     """
     Plots the ROC curve for each class
     Args:
@@ -246,28 +246,35 @@ def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -
     roc_auc = dict()
     n_classes = len(np.unique(y_test))
     for i in range(n_classes):
-        fpr[i], tpr[i], _ = metrics.roc_curve(y_test[:, i], y_pred_probs[:, i])
+        fpr[i], tpr[i], _ = metrics.roc_curve(y_test==i, y_pred_probs[:, i])
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
     
     ##Plot the ROC curve for each class
-    plt.figure(figsize=(8, 8))
+    fig, axes  = plt.subplots(nrows = 4, ncols = 4, figsize = (16, 16))
     colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black', 'gray', 'orange', 'brown', 'pink', 'olive', 'purple']
     for i, color in zip(range(n_classes), colors):
-        plt.plot(fpr[i], tpr[i], color=color, lw=2,
-                 label='ROC curve of class {0} (area = {1:0.2f})'
-                 ''.format(i, roc_auc[i]))
+        row = i // 4
+        col = i % 4
+        ax = axes[row, col]
+        ax.plot(fpr[i], tpr[i], color=color, lw=2, label = "Model ROC curve")
     
-    # Plot the diagonal line representing the random classifier
-    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+        # Plot the diagonal line representing the random classifier
+        ax.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random classifier')
     
-    # Customize the plot
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic (ROC) Curve for Each Class')
-    plt.legend(loc="lower right")
+        # Customize the plot
+        ax.set_xlim([0.0, 1.0])
+        ax.set_ylim([0.0, 1.05])
+        ax.set_xlabel('False Positive Rate')
+        ax.set_ylabel('True Positive Rate')
+        ax.set_title(class_names[i])
+        ax.legend(loc = "lower right")
+    
+    axes[3,1].set_visible(False)
+    axes[3,2].set_visible(False)
+    axes[3,3].set_visible(False)
+    plt.subplots_adjust(hspace=0.5, wspace=0.5)
     plt.show()
+
     
 def macro_averaged_ROC(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
     """
@@ -316,7 +323,7 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
     y_pred_probs, y_test, y_pred, class_names = ExtractPredictions(model, test_ds)
     PrecisionRecallScores(y_test, y_pred)
     ConfusionMatrix(class_names, y_test, y_pred)
-    individual_ROCs(y_pred_probs, y_test, y_pred)
+    individual_ROCs(class_names, y_pred_probs, y_test, y_pred)
     macro_averaged_ROC(y_pred_probs, y_test, y_pred)
     
 
