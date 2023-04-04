@@ -231,7 +231,7 @@ def AugmentImage(brightness: float = 0.0, contrast: int = 1, flip: bool = False,
         return aug, y
     return AugmentImageHelper
 
-def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_names: str) -> None:
+def individual_ROCs(class_names: str, y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
     """
     Plots the ROC curve for each class
     Args:
