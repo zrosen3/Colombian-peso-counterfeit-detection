@@ -231,9 +231,9 @@ def AugmentImage(brightness: float = 0.0, contrast: int = 1, flip: bool = False,
         return aug, y
     return AugmentImageHelper
 
-def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_names: str) -> None:
+def ROCPlots(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_names: str) -> None:
     """
-    Plots the ROC curve for each class
+    Plots the ROC curve for each class, macro-averaged ROC curve
     Args:
         y_pred_probs: the array of class probabilities 
         y_test: the array of actual class values
@@ -248,7 +248,22 @@ def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, c
     for i in range(n_classes):
         fpr[i], tpr[i], _ = metrics.roc_curve(y_test==i, y_pred_probs[:, i])
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
+        
+    # Compute macro-average ROC curve and ROC area
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(n_classes):
+        mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+    mean_tpr /= n_classes
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = metrics.auc(fpr["macro"], tpr["macro"])
     
+    # Plot the macro-averaged ROC curve
+    plt.figure(figsize=(8, 8))
+    plt.plot(fpr["macro"], tpr["macro"],
+    label='macro-average ROC curve (area = {0:0.2f})'''.format(roc_auc["macro"]), color='navy', linestyle='-', linewidth=2)
+     
     ##Plot the ROC curve for each class
     fig, axes  = plt.subplots(nrows = 4, ncols = 4, figsize = (16, 16))
     colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black', 'gray', 'orange', 'brown', 'pink', 'olive', 'purple']
@@ -274,44 +289,10 @@ def individual_ROCs(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, c
     axes[3,3].set_visible(False)
     plt.subplots_adjust(hspace=0.5, wspace=0.5)
     plt.show()
+    
+    
 
     
-def macro_averaged_ROC(y_pred_probs:np.array, y_test: np.array, y_pred: np.array) -> None:
-    """
-    Plots the macro averaged ROC curve
-    Args: 
-        y_pred_probs: the array of class probabilities
-        y_test: the array of actual class values
-        y_pred: the array of predicted class values
-    """
-
-    # Calculate the ROC curve for each class separately and take the average
-    n_classes = 13
-    fpr = dict()
-    tpr = dict()
-    roc_auc = dict()
-    for i in range(n_classes):
-        fpr[i], tpr[i], _ = metrics.roc_curve(y_test == i, y_pred_probs[:, i])
-        roc_auc[i] = metrics.auc(fpr[i], tpr[i])
-    
-    # Compute macro-average ROC curve and ROC area
-    fpr["macro"], tpr["macro"], _ = metrics.roc_curve(y_test.ravel(), y_pred_probs.ravel())
-    roc_auc["macro"] = metrics.auc(fpr["macro"], tpr["macro"])
-    
-    # Plot the ROC curve
-    plt.figure(figsize=(8, 8))
-    plt.plot(fpr["macro"], tpr["macro"],
-             label='macro-average ROC curve (area = {0:0.2f})'
-                   ''.format(roc_auc["macro"]),
-             color='navy', linestyle='-', linewidth=2)
-    
-    colors = ['aqua', 'darkorange', 'cornflowerblue', 'green']
-    for i, color in zip(range(n_classes), colors):
-        plt.plot(fpr[i], tpr[i], color=color, lw=2,
-                 label='ROC curve of class {0} (area = {1:0.2f})'
-                 ''.format(i, roc_auc[i]))
-    
-    plt.plot([0, 1], [0, 1], 'k--')
 
 def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Dataset, class_names:str) -> None:
     """
@@ -323,8 +304,7 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
     y_pred_probs, y_test, y_pred, class_names = ExtractPredictions(model, test_ds)
     PrecisionRecallScores(y_test, y_pred)
     ConfusionMatrix(class_names, y_test, y_pred)
-    individual_ROCs(class_names, y_pred_probs, y_test, y_pred)
-    macro_averaged_ROC(y_pred_probs, y_test, y_pred)
+    ROCPlots(class_names, y_pred_probs, y_test, y_pred)
     
 
     
