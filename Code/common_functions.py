@@ -282,7 +282,7 @@ def ROCPlots(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_na
     
         
     # Plot the macro-averaged ROC curve
-    ax = ax[3,1]
+    ax = axes[3,1]
     ax.plot(fpr["macro"], tpr["macro"],
     label='macro-average ROC curve (area = {0:0.2f})'''.format(roc_auc["macro"]), color='navy', linestyle='-', linewidth=2)
     
