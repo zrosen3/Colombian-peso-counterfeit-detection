@@ -261,8 +261,8 @@ def ROCPlots(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_na
      
     ##Plot the ROC curve for each class
     fig, axes  = plt.subplots(nrows = 4, ncols = 4, figsize = (16, 16))
-    colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black', 'gray', 'orange', 'brown', 'pink', 'olive', 'purple']
-    for i, color in zip(range(n_classes) + 1, colors):
+    colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black', 'gray', 'orange', 'brown', 'pink', 'olive', 'purple', 'tomato']
+    for i, color in zip(range(n_classes+1), colors):
         row = i // 4
         col = i % 4
         ax = axes[row, col]
@@ -273,7 +273,7 @@ def ROCPlots(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_na
         if i == 13:
              #Plot macro averaged curve
              ax.plot(fpr["macro"], tpr["macro"],
-    label='macro-average ROC curve (area = {0:0.2f})'''.format(roc_auc["macro"]), color='navy', linestyle='-', linewidth=2)
+    label='Average ROC curve (area = {0:0.2f})'''.format(roc_auc["macro"]), color='navy', linestyle='-', linewidth=2)
 
          # Plot the diagonal line representing the random classifier
         ax.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random classifier')
@@ -283,7 +283,7 @@ def ROCPlots(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_na
         ax.set_ylim([0.0, 1.05])
         ax.set_xlabel('False Positive Rate')
         ax.set_ylabel('True Positive Rate')
-        ax.set_title(class_names[i])
+        ax.set_title(class_names[i]) if i < 13 else ax.set_title("Macro-average ROC curve")
         ax.legend(loc = "lower right")
     axes[3,2].set_visible(False)
     axes[3,3].set_visible(False)
