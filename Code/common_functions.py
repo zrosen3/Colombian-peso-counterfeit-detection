@@ -258,11 +258,6 @@ def ROCPlots(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_na
     fpr["macro"] = all_fpr
     tpr["macro"] = mean_tpr
     roc_auc["macro"] = metrics.auc(fpr["macro"], tpr["macro"])
-    
-    # Plot the macro-averaged ROC curve
-    plt.figure(figsize=(8, 8))
-    plt.plot(fpr["macro"], tpr["macro"],
-    label='macro-average ROC curve (area = {0:0.2f})'''.format(roc_auc["macro"]), color='navy', linestyle='-', linewidth=2)
      
     ##Plot the ROC curve for each class
     fig, axes  = plt.subplots(nrows = 4, ncols = 4, figsize = (16, 16))
@@ -284,7 +279,13 @@ def ROCPlots(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_na
         ax.set_title(class_names[i])
         ax.legend(loc = "lower right")
     
-    axes[3,1].set_visible(False)
+    
+        
+    # Plot the macro-averaged ROC curve
+    ax = ax[3,1]
+    ax.plot(fpr["macro"], tpr["macro"],
+    label='macro-average ROC curve (area = {0:0.2f})'''.format(roc_auc["macro"]), color='navy', linestyle='-', linewidth=2)
+    
     axes[3,2].set_visible(False)
     axes[3,3].set_visible(False)
     plt.subplots_adjust(hspace=0.5, wspace=0.5)
