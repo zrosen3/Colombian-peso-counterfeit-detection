@@ -301,7 +301,7 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
         model: the model to test
         test_ds: the test dataset to evaluate the model with 
     """
-    y_pred_probs, y_test, y_pred, class_names = MakePredictions(model, test_ds)
+    y_pred_probs, y_test, y_pred = MakePredictions(model, test_ds)
     PrecisionRecallScores(y_test, y_pred)
     ConfusionMatrix(class_names, y_test, y_pred)
     ROCPlots(y_pred_probs, y_test, y_pred, class_names)
