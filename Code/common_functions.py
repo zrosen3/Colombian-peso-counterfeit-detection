@@ -246,7 +246,7 @@ def ROCPlots(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_na
     tpr = dict()
     roc_auc = dict()
     for i in range(n_classes):
-        fpr[i], tpr[i], _ = metrics.roc_curve(y_test==i, y_pred_probs[:, i])
+        fpr[i], tpr[i], _ = metrics.roc_curve((y_test==i).astype(int), y_pred_probs[:, i])
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
         
     # Compute macro-average ROC curve and ROC area
