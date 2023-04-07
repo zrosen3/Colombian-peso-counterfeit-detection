@@ -330,11 +330,11 @@ def CNNModel(class_names: list, conv_layers: list = [32], kernel_size: tuple = (
     for layer_count in layers:
         model.add(tf.keras.layers.Dense(layer_count, activation='relu'))
     model.add(tf.keras.layers.Dropout(rate=0.5))
-    model.add(tf.keras.layers.Dense(len(class_names)))
+    model.add(tf.keras.layers.Dense(len(class_names)), activation = 'softmax')
 
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
         metrics=['accuracy']
     )
 
