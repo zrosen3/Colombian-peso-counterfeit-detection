@@ -124,7 +124,6 @@ def ConfusionMatrix(class_names: list, true_labels: list, predicted_labels: list
     ax.set(xlabel='Predicted Label', ylabel='True Label')
     plt.show()
 
-
 def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history: tf.keras.callbacks.History) -> None:
     """
     Take the model and plot the training accuracy and validation accuracy. Also,
@@ -166,7 +165,6 @@ def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history:
     test_loss, test_acc = model.evaluate(test_ds, verbose=2)
     print(f"Test loss: {test_loss} | Test accuracy: {test_acc}")
     return hist['accuracy'][-1], hist['val_accuracy'][-1], test_acc
-
 
 def MakePredictions(model: tf.keras.Sequential, test_ds: tf.data.Dataset) -> tuple:
     """
@@ -212,7 +210,6 @@ def PrecisionRecallScores (y_test:np.array, y_pred:np.array) -> None:
     print(f"Macro averaged recall score: {macro_averaged_recall}")
     print(f"Macro averaged F1 score: {macro_averaged_f1score}")
 
-        
 def AugmentImage(brightness: float = 0.0, contrast: int = 1, flip: bool = False, hue: float = 0.0, gamma: int = 1, saturation: float = 0.0):
     def AugmentImageHelper(x, y):
         aug = x
@@ -290,10 +287,6 @@ def ROCPlots(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_na
     plt.subplots_adjust(hspace=0.5, wspace=0.5)
     plt.show()
     
-    
-
-    
-
 def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Dataset, class_names:str) -> None:
     """
     Runs functions for calculating and visualizating precision and recall
@@ -306,40 +299,3 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
     ConfusionMatrix(class_names, y_test, y_pred)
     ROCPlots(y_pred_probs, y_test, y_pred, class_names)
     
-def CNNModel(class_names: list, conv_layers: list = [32], kernel_size: tuple = (3,3), strides: tuple = (1,1), pool_size: tuple = (2,2), layers: list = [], learning_rate: float = 0.001) -> tf.keras.Sequential:
-    """
-    Simple straight forward CNN model. this is just for simplicity and testing
-    atm. I will make it more modular later once I know what we are doing
-
-    Args:
-        class_names: list of the classification names
-        conv_layers: list of how many filters each convolutional layer should use
-        layers: list with the sizes of each hidden layer
-
-    Returns:
-        `tf.keras.Sequential` - a constructed tf model
-    """
-    tf.keras.backend.clear_session()
-
-    model = tf.keras.Sequential()
-    # model.add(tf.keras.layers.Rescaling(1./255))
-    for filter_count in conv_layers:
-        model.add(tf.keras.layers.Conv2D(filter_count,3, activation='relu'))
-        model.add(tf.keras.layers.MaxPooling2D())
-    model.add(tf.keras.layers.Flatten())
-    for layer_count in layers:
-        model.add(tf.keras.layers.Dense(layer_count, activation='relu'))
-    model.add(tf.keras.layers.Dropout(rate=0.5))
-    model.add(tf.keras.layers.Dense(len(class_names)), activation = 'softmax')
-
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
-        metrics=['accuracy']
-    )
-
-    return model
-    
-
-    
-
