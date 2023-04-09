@@ -312,11 +312,14 @@ def reduce_dimensions_svd(dataset: tf.data.Dataset, k:int = 32) -> tf.data.Datas
     #Loop through dataset
     for batch in dataset.as_numpy_iterator():
         
+        #Extract features and values
+        x_batch, y_batch = batch 
+        
         #Reshape batch
-        batch = tf.reshape(batch, (batch.shape[0], -1))
+        x_batch = tf.reshape(x_batch, (batch.shape[0], -1))
 
         # Compute SVD
-        s, U, V = tf.linalg.svd(batch, full_matrices=False)
+        s, U, V = tf.linalg.svd(x_batch, full_matrices=False)
 
         # Truncate SVD matrices to desired number of reduced dimensions
         U = U[:, :k]
@@ -330,6 +333,6 @@ def reduce_dimensions_svd(dataset: tf.data.Dataset, k:int = 32) -> tf.data.Datas
         reduced_batch = tf.reshape(reduced_batch, batch.shape)
 
         # Append reduced batch to reduced dataset
-        reduced_dataset.append(reduced_batch)
-
+        reduced_dataset.append((reduced_batch, y_batch))
+       
     return tf.data.Dataset.from_tensor_slices(reduced_dataset)
