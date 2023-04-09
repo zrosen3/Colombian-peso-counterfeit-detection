@@ -300,7 +300,7 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
     ROCPlots(y_pred_probs, y_test, y_pred, class_names)
     
     
-   def reduce_dimensions_svd(dataset: tf.data.Dataset, k:int = 32) -> tf.data.Dataset:
+def reduce_dimensions_svd(dataset: tf.data.Dataset, k:int = 32) -> tf.data.Dataset:
     reduced_dataset = []
     
     #Loop through dataset
