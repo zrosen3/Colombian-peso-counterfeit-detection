@@ -304,7 +304,7 @@ def reduce_dimensions_svd(dataset: tf.data.Dataset, k:int = 32) -> tf.data.Datas
     reduced_dataset = []
     
     #Loop through dataset
-    for batch in dataset:
+    for batch in dataset.as_numpy_iterator():
         
         #Reshape batch
         batch = tf.reshape(batch, (batch.shape[0], -1))
