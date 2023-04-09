@@ -299,3 +299,31 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
     ConfusionMatrix(class_names, y_test, y_pred)
     ROCPlots(y_pred_probs, y_test, y_pred, class_names)
     
+    
+   def reduce_dimensions_svd(dataset: tf.data.Dataset, k:int = 32) -> tf.data.Dataset:
+    reduced_dataset = []
+    
+    #Loop through dataset
+    for batch in dataset:
+        
+        #Reshape batch
+        batch = tf.reshape(batch, (batch.shape[0], -1))
+
+        # Compute SVD
+        s, U, V = tf.linalg.svd(batch, full_matrices=False)
+
+        # Truncate SVD matrices to desired number of reduced dimensions
+        U = U[:, :k]
+        s = s[:, :k]
+        V = V[:, :k]
+
+        # Compute reduced batch
+        reduced_batch = tf.linalg.matmul(U, tf.linalg.matmul(tf.linalg.diag(s), tf.linalg.matrix_transpose(V)))
+
+        # Reshape reduced batch to original shape
+        reduced_batch = tf.reshape(reduced_batch, batch.shape)
+
+        # Append reduced batch to reduced dataset
+        reduced_dataset.append(reduced_batch)
+
+    return tf.data.Dataset.from_tensor_slices(reduced_dataset)
