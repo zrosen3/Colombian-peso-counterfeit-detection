@@ -301,6 +301,12 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
     
     
 def reduce_dimensions_svd(dataset: tf.data.Dataset, k:int = 32) -> tf.data.Dataset:
+    """
+    Uses singular value decomposition to reduce the dimensions of the dataset
+    Args:
+        dataset: the dataset to reshape
+        k: the number of dimensions to reduce the dataset to
+    """
     reduced_dataset = []
     
     #Loop through dataset
