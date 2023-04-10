@@ -4,8 +4,6 @@ import seaborn as sns
 from sklearn import metrics
 import numpy as np
 
-
-
 def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, color: str = "rgb", shuffle = True, batch_size = 32) -> tuple:
     """
     Load all the images in the given dataset folder. Since all the images in the
@@ -298,4 +296,37 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
     PrecisionRecallScores(y_test, y_pred)
     ConfusionMatrix(class_names, y_test, y_pred)
     ROCPlots(y_pred_probs, y_test, y_pred, class_names)
-    
+
+def CNNModel(class_names: list, conv_layers: list = [32], layers: list = [], learning_rate: float = 0.001, dropout: float = 0.5) -> tf.keras.Sequential:
+    """
+    Simple straight forward CNN model. this is just for simplicity and testing
+    atm. I will make it more modular later once I know what we are doing
+    Args:
+        class_names: list of the classification names
+        conv_layers: list of how many filters each convolutional layer should use
+        layers: list with the sizes of each hidden layer
+        learning_rate: the learning rate for the optimizer
+        dropout: the dropout rate for the model
+    Returns:
+        `tf.keras.Sequential` - a constructed tf model
+    """
+    tf.keras.backend.clear_session()
+
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Rescaling(1./255))
+    for filter_count in conv_layers:
+        model.add(tf.keras.layers.Conv2D(filter_count, 3, activation='relu'))
+        model.add(tf.keras.layers.MaxPooling2D())
+    model.add(tf.keras.layers.Flatten())
+    for layer_count in layers:
+        model.add(tf.keras.layers.Dense(layer_count, activation='relu'))
+    model.add(tf.keras.layers.Dropout(rate=dropout))
+    model.add(tf.keras.layers.Dense(len(class_names)), activation = 'softmax')
+
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+        metrics=['accuracy']
+    )
+
+    return model
