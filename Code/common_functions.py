@@ -297,6 +297,43 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
     ConfusionMatrix(class_names, y_test, y_pred)
     ROCPlots(y_pred_probs, y_test, y_pred, class_names)
 
+def reduce_dimensions_svd(dataset: tf.data.Dataset, k:int = 32) -> tf.data.Dataset:
+    """
+    Uses singular value decomposition to reduce the dimensions of the dataset
+    Args:
+        dataset: the dataset to reshape
+        k: the number of dimensions to reduce the dataset to
+    """
+    reduced_dataset = []
+    
+    #Loop through dataset
+    for batch in dataset.as_numpy_iterator():
+        
+        #Extract features and values
+        x_batch, y_batch = batch 
+        
+        #Reshape batch
+        x_batch = tf.reshape(x_batch, (batch.shape[0], -1))
+
+        # Compute SVD
+        s, U, V = tf.linalg.svd(x_batch, full_matrices=False)
+
+        # Truncate SVD matrices to desired number of reduced dimensions
+        U = U[:, :k]
+        s = s[:, :k]
+        V = V[:, :k]
+
+        # Compute reduced batch
+        reduced_batch = tf.linalg.matmul(U, tf.linalg.matmul(tf.linalg.diag(s), tf.linalg.matrix_transpose(V)))
+
+        # Reshape reduced batch to original shape
+        reduced_batch = tf.reshape(reduced_batch, batch.shape)
+
+        # Append reduced batch to reduced dataset
+        reduced_dataset.append((reduced_batch, y_batch))
+       
+    return tf.data.Dataset.from_tensor_slices(reduced_dataset)
+
 def CNNModel(class_names: list, conv_layers: list = [32], layers: list = [], learning_rate: float = 0.001, dropout: float = 0.5) -> tf.keras.Sequential:
     """
     Simple straight forward CNN model. this is just for simplicity and testing
