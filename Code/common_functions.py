@@ -4,8 +4,6 @@ import seaborn as sns
 from sklearn import metrics
 import numpy as np
 
-
-
 def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, color: str = "rgb", shuffle = True, batch_size = 32) -> tuple:
     """
     Load all the images in the given dataset folder. Since all the images in the
@@ -124,7 +122,6 @@ def ConfusionMatrix(class_names: list, true_labels: list, predicted_labels: list
     ax.set(xlabel='Predicted Label', ylabel='True Label')
     plt.show()
 
-
 def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history: tf.keras.callbacks.History) -> None:
     """
     Take the model and plot the training accuracy and validation accuracy. Also,
@@ -166,7 +163,6 @@ def EvaluateModel(model: tf.keras.Sequential, test_ds: tf.data.Dataset, history:
     test_loss, test_acc = model.evaluate(test_ds, verbose=2)
     print(f"Test loss: {test_loss} | Test accuracy: {test_acc}")
     return hist['accuracy'][-1], hist['val_accuracy'][-1], test_acc
-
 
 def MakePredictions(model: tf.keras.Sequential, test_ds: tf.data.Dataset) -> tuple:
     """
@@ -212,7 +208,6 @@ def PrecisionRecallScores (y_test:np.array, y_pred:np.array) -> None:
     print(f"Macro averaged recall score: {macro_averaged_recall}")
     print(f"Macro averaged F1 score: {macro_averaged_f1score}")
 
-        
 def AugmentImage(brightness: float = 0.0, contrast: int = 1, flip: bool = False, hue: float = 0.0, gamma: int = 1, saturation: float = 0.0):
     def AugmentImageHelper(x, y):
         aug = x
@@ -290,10 +285,6 @@ def ROCPlots(y_pred_probs:np.array, y_test: np.array, y_pred: np.array, class_na
     plt.subplots_adjust(hspace=0.5, wspace=0.5)
     plt.show()
     
-    
-
-    
-
 def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Dataset, class_names:str) -> None:
     """
     Runs functions for calculating and visualizating precision and recall
@@ -305,7 +296,74 @@ def precision_recall_metrics(model: tf.keras.Sequential, test_ds: tf.data.Datase
     PrecisionRecallScores(y_test, y_pred)
     ConfusionMatrix(class_names, y_test, y_pred)
     ROCPlots(y_pred_probs, y_test, y_pred, class_names)
-    
 
+def reduce_dimensions_svd(dataset: tf.data.Dataset, k:int = 32) -> tf.data.Dataset:
+    """
+    Uses singular value decomposition to reduce the dimensions of the dataset
+    Args:
+        dataset: the dataset to reshape
+        k: the number of dimensions to reduce the dataset to
+    """
+    reduced_dataset = []
     
+    #Loop through dataset
+    for batch in dataset.as_numpy_iterator():
+        
+        #Extract features and values
+        x_batch, y_batch = batch 
+        
+        #Reshape batch
+        x_batch = tf.reshape(x_batch, (batch.shape[0], -1))
 
+        # Compute SVD
+        s, U, V = tf.linalg.svd(x_batch, full_matrices=False)
+
+        # Truncate SVD matrices to desired number of reduced dimensions
+        U = U[:, :k]
+        s = s[:, :k]
+        V = V[:, :k]
+
+        # Compute reduced batch
+        reduced_batch = tf.linalg.matmul(U, tf.linalg.matmul(tf.linalg.diag(s), tf.linalg.matrix_transpose(V)))
+
+        # Reshape reduced batch to original shape
+        reduced_batch = tf.reshape(reduced_batch, batch.shape)
+
+        # Append reduced batch to reduced dataset
+        reduced_dataset.append((reduced_batch, y_batch))
+       
+    return tf.data.Dataset.from_tensor_slices(reduced_dataset)
+
+def CNNModel(class_names: list, conv_layers: list = [32], layers: list = [], learning_rate: float = 0.001, dropout: float = 0.5) -> tf.keras.Sequential:
+    """
+    Simple straight forward CNN model. this is just for simplicity and testing
+    atm. I will make it more modular later once I know what we are doing
+    Args:
+        class_names: list of the classification names
+        conv_layers: list of how many filters each convolutional layer should use
+        layers: list with the sizes of each hidden layer
+        learning_rate: the learning rate for the optimizer
+        dropout: the dropout rate for the model
+    Returns:
+        `tf.keras.Sequential` - a constructed tf model
+    """
+    tf.keras.backend.clear_session()
+
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Rescaling(1./255))
+    for filter_count in conv_layers:
+        model.add(tf.keras.layers.Conv2D(filter_count, 3, activation='relu'))
+        model.add(tf.keras.layers.MaxPooling2D())
+    model.add(tf.keras.layers.Flatten())
+    for layer_count in layers:
+        model.add(tf.keras.layers.Dense(layer_count, activation='relu'))
+    model.add(tf.keras.layers.Dropout(rate=dropout))
+    model.add(tf.keras.layers.Dense(len(class_names), activation = 'softmax'))
+
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+        metrics=['accuracy']
+    )
+
+    return model
