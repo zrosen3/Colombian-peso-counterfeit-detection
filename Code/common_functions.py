@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn import metrics
 import numpy as np
+import random
 
-def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, color: str = "rgb", shuffle = True, batch_size = 32) -> tuple:
+def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, color: str = "rgb", shuffle: bool = True, batch_size: int = 32, path: str = "../Data/Original/") -> tuple:
     """
     Load all the images in the given dataset folder. Since all the images in the
     dataset are already split in separate folders, this function
@@ -22,12 +23,14 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
             (default = "rbg")
         shuffle: Whether or not to shuffle the dataset.
         batch_size: Default batch size for loading in the datasets, default is 32.
+        path: the path to the folder containing the "ds" folders with the images. (make sure the path ends with a "/")
+
     Returns:
         `tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset, list[string]]`
         where it is (Train, Test, Validation, and class names) respectively
     """
     train_ds = tf.keras.utils.image_dataset_from_directory(
-        f"../Data/Original/ds{ds_num}/Train/",
+        f"{path}ds{ds_num}/Train/",
         image_size=image_size,
         color_mode=color,
         seed=seed,
@@ -35,7 +38,7 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
         batch_size = batch_size
     )
     test_ds = tf.keras.utils.image_dataset_from_directory(
-        f"../Data/Original/ds{ds_num}/Test/",
+        f"{path}ds{ds_num}/Test/",
         image_size=image_size,
         color_mode=color,
         seed=seed,
@@ -43,7 +46,7 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
         batch_size = batch_size
     )
     validation_ds = tf.keras.utils.image_dataset_from_directory(
-        f"../Data/Original/ds{ds_num}/Validation/",
+        f"{path}ds{ds_num}/Validation/",
         image_size=image_size,
         color_mode=color,
         seed=seed,
@@ -367,3 +370,28 @@ def CNNModel(class_names: list, conv_layers: list = [32], layers: list = [], lea
     )
 
     return model
+
+def RandomlyAugmentImages(seed = None):
+    """
+    Preprocess function that chooses a random augment to apply to the image.
+    The augment will also apply at a random delta for variation.
+    Augments include hue, brightness, contrast, saturation, and nothing.
+
+    Args:
+        seed: if you need a consistant result you can set the seed here. `None` will not use a seed (None is the default)
+
+    Return:
+        Function to run the preprocess on
+    """
+    def AugmentHelper(x,y):
+        print("HEREEEEEEEEEEEEEEEEEEEEE")
+        if seed != None:
+            random.seed(seed)
+        return random.choice([
+            lambda: x,
+            lambda: tf.image.random_hue(x,0.5,seed),
+            lambda: tf.image.random_brightness(x,0.8,seed),
+            lambda: tf.image.random_contrast(x,0.1,0.8,seed),
+            lambda: tf.image.random_saturation(x,0.1,0.8,seed)
+        ])(), y
+    return AugmentHelper
