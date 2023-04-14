@@ -4,6 +4,10 @@ import seaborn as sns
 from sklearn import metrics
 import numpy as np
 import random
+from IPython.display import clear_output
+import shutil
+import time
+import os
 
 def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, color: str = "rgb", shuffle: bool = True, batch_size: int = 32, path: str = "../Data/Original/") -> tuple:
     """
@@ -371,27 +375,74 @@ def CNNModel(class_names: list, conv_layers: list = [32], layers: list = [], lea
 
     return model
 
-def RandomlyAugmentImages(seed = None):
-    """
-    Preprocess function that chooses a random augment to apply to the image.
-    The augment will also apply at a random delta for variation.
-    Augments include hue, brightness, contrast, saturation, and nothing.
+def AugmentImages(src: str = "../Data/Original/ds1/", dest: str ="../Data/Augmented/", seed = None) -> None:
+    if seed != None:
+        random.seed(seed)
+    if not os.path.exists(dest):
+        os.mkdir(dest)
 
-    Args:
-        seed: if you need a consistant result you can set the seed here. `None` will not use a seed (None is the default)
+    print("Checking files if they need to be renamed to jpeg")
+    for sub_folder in ["Train", "Test", "Validation"]:
+        src_sub_path = src + sub_folder + "/"
+        dest_sub_path = dest + sub_folder + "/"
+        if not os.path.exists(dest_sub_path):
+            os.mkdir(dest_sub_path)
+        for img_folder in [p for p in os.listdir(src_sub_path) if not p.startswith(".")]:
+            src_img_path = src_sub_path + img_folder + "/"
+            dest_img_path = dest_sub_path + img_folder + "/"
+            if not os.path.exists(dest_img_path):
+                os.mkdir(dest_img_path)
+            num_files = len(os.listdir(src_img_path))
+            count = 0
+            for i, file_name in enumerate(os.listdir(src_img_path)):
+                if count % 100 == 0:
+                    clear_output(wait=True)
+                    print(f"{count} / {num_files} | {src_img_path} -> {dest_img_path}")
+                    time.sleep(0.01)
+                if file_name.endswith(".jpg"):
+                    new_file_name = file_name.replace(".jpg", ".jpeg")
+                    shutil.copy(os.path.join(src_img_path, file_name), os.path.join(dest_img_path, new_file_name))
+                    shutil.copy(os.path.join(src_img_path, file_name), os.path.join(dest_img_path, new_file_name[:-5] + "_aug.jpeg"))
+                count += 1
 
-    Return:
-        Function to run the preprocess on
-    """
-    def AugmentHelper(x,y):
-        print("HEREEEEEEEEEEEEEEEEEEEEE")
-        if seed != None:
-            random.seed(seed)
-        return random.choice([
-            lambda: x,
-            lambda: tf.image.random_hue(x,0.5,seed),
-            lambda: tf.image.random_brightness(x,0.8,seed),
-            lambda: tf.image.random_contrast(x,0.1,0.8,seed),
-            lambda: tf.image.random_saturation(x,0.1,0.8,seed)
-        ])(), y
-    return AugmentHelper
+    clear_output(wait=True)
+    print("Running augments")
+    time.sleep(0.5)
+    totals = {}
+    folder_total = sum([len(os.listdir(dest + sub_folder + "/")) for s in ["Train", "Test", "Validation"]])
+    folder_count = 0
+    for sub_folder in ["Train", "Test", "Validation"]:
+        totals[sub_folder] = {
+            "original": 0,
+            "augmented": 0,
+            "running_total": 0
+        }
+        dest_sub_path = dest + sub_folder + "/"
+        for img_folder in os.listdir(dest_sub_path):
+            dest_img_path = dest_sub_path + img_folder + "/"
+            dest_img_list = [p for p in os.listdir(dest_img_path) if p.endswith("_aug.jpeg")]
+            num_files = len(dest_img_list)
+            totals[sub_folder]["original"] += len(os.listdir(dest_img_path)) - num_files
+            totals[sub_folder]["augmented"] += num_files
+            totals[sub_folder]["running_total"] += totals[sub_folder]["augmented"] + totals[sub_folder]["original"]
+            count = 0
+            for i, file_name in enumerate(dest_img_list):
+                if count % 100 == 0:
+                    clear_output(wait=True)
+                    print(f"{count} / {num_files} | {dest_img_path} ({folder_count} / {folder_total})")
+                data = tf.image.decode_jpeg(tf.io.read_file(dest_img_path + file_name))
+                ([
+                    lambda: tf.image.random_hue(data,0.5,seed),
+                    lambda: tf.image.random_brightness(data,0.8,seed),
+                    lambda: tf.image.random_contrast(data,0.1,0.8,seed),
+                    lambda: tf.image.random_saturation(data,0.1,0.8,seed)
+                ])[((random.randomint(0,4) if seed != None else 0) + i) % 4]()
+                tf.keras.utils.save_img(dest_img_path + file_name[:-4] + ".jpeg", data)
+                count += 1
+            folder_count += 1
+    totals["totals"] = {}
+    totals["totals"]["original"] = sum([totals[t]["original"] for t in ["Train", "Test", "Validation"]])
+    totals["totals"]["augmented"] = sum([totals[t]["augmented"] for t in ["Train", "Test", "Validation"]])
+    totals["totals"]["running_total"] = sum([totals[t]["running_total"] for t in ["Train", "Test", "Validation"]])
+    print("Augmented images finished!")
+    print(totals["totals"])
