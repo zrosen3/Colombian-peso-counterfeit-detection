@@ -435,7 +435,7 @@ def AugmentImages(src: str = "../Data/Original/ds1/", dest: str ="../Data/Augmen
                     lambda: tf.image.random_contrast(data,0.1,0.8,seed),
                     lambda: tf.image.random_saturation(data,0.1,0.8,seed)
                 ])[((random.randomint(0,4) if seed != None else 0) + i) % 4]()
-                tf.keras.utils.save_img(dest_img_path + file_name[:-4] + ".jpeg", data)
+                tf.keras.utils.save_img(dest_img_path + file_name[:-5] + ".jpeg", data)
                 count += 1
             folder_count += 1
     totals["totals"] = {}
