@@ -9,7 +9,7 @@ import shutil
 import time
 import os
 
-def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, color: str = "rgb", shuffle: bool = True, batch_size: int = 32, path: str = "../Data/Original/") -> tuple:
+def LoadData(image_size: tuple = (480, 640), seed: int = 1234, color: str = "rgb", shuffle: bool = True, batch_size: int = 32, path: str = "../Data/Original/ds1/") -> tuple:
     """
     Load all the images in the given dataset folder. Since all the images in the
     dataset are already split in separate folders, this function
@@ -19,10 +19,8 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
     Args:
         image_size: size the images will be processed into (h,w) 
             (default = (480,640))
-        seed: random seed to shuffle the dataset with. Use `None` if do not need reproducibility
-        . (default = 1234)
-        ds_num: the dataset number corrisponding to the folder to extract the
-            dataset from. (ex. 1 = "ds1") (default = 1)
+        seed: random seed to shuffle the dataset with. Use `None` if do not need reproducibility.
+            (default = 1234)
         color: the color to process the images as. ("rgb", "rgba", "grayscale)
             (default = "rbg")
         shuffle: Whether or not to shuffle the dataset.
@@ -34,7 +32,7 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
         where it is (Train, Test, Validation, and class names) respectively
     """
     train_ds = tf.keras.utils.image_dataset_from_directory(
-        f"{path}ds{ds_num}/Train/",
+        f"{path}Train/",
         image_size=image_size,
         color_mode=color,
         seed=seed,
@@ -42,7 +40,7 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
         batch_size = batch_size
     )
     test_ds = tf.keras.utils.image_dataset_from_directory(
-        f"{path}ds{ds_num}/Test/",
+        f"{path}Test/",
         image_size=image_size,
         color_mode=color,
         seed=seed,
@@ -50,7 +48,7 @@ def LoadData(image_size: tuple = (480, 640), seed: int = 1234, ds_num: int = 1, 
         batch_size = batch_size
     )
     validation_ds = tf.keras.utils.image_dataset_from_directory(
-        f"{path}ds{ds_num}/Validation/",
+        f"{path}Validation/",
         image_size=image_size,
         color_mode=color,
         seed=seed,
