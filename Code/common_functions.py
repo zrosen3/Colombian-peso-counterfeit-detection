@@ -374,6 +374,21 @@ def CNNModel(class_names: list, conv_layers: list = [32], layers: list = [], lea
     return model
 
 def AugmentImages(src: str = "../Data/Original/ds1/", dest: str ="../Data/Augmented/", seed = None) -> None:
+    """
+    Copies the images in the `src` data folder into a new `dest` folder. The destination will automatically
+    create "Train", "Test", and "Validation" folders including the classification folders. There will be
+    2 copies of each image from the source dataset. 1 image will be original (no augments) the other image
+    will have augments (augmented image names are prefix with "_aug"). The randomness is determined by the
+    order of the list of files mod 4 (4 for each augment). essentially it is uniformily random. A seed can
+    be used to get a consistant result (but im going to be honest i haven't tried it yet).
+
+    Args:
+        src: the source data folder to copy from (must be one of the "ds" folders) (must end with a "/")
+        dest: the destination folder to create "Train", "Test", and "Validation" folders (including the
+            classification folders) and copy the images from the source to. (must end with a "/")
+        seed: can use a seed for more deterministic results. use `None` if you don't want to use a seed,
+            then the randomness will be uniformily random by just using the file index mod 4.
+    """
     if seed != None:
         random.seed(seed)
     if not os.path.exists(dest):
@@ -391,17 +406,15 @@ def AugmentImages(src: str = "../Data/Original/ds1/", dest: str ="../Data/Augmen
             if not os.path.exists(dest_img_path):
                 os.mkdir(dest_img_path)
             num_files = len(os.listdir(src_img_path))
-            count = 0
             for i, file_name in enumerate(os.listdir(src_img_path)):
-                if count % 100 == 0:
+                if i % 100 == 0:
                     clear_output(wait=True)
-                    print(f"{count} / {num_files} | {src_img_path} -> {dest_img_path}")
+                    print(f"{i} / {num_files} | {src_img_path} -> {dest_img_path}")
                     time.sleep(0.01)
                 if file_name.endswith(".jpg"):
                     new_file_name = file_name.replace(".jpg", ".jpeg")
                     shutil.copy(os.path.join(src_img_path, file_name), os.path.join(dest_img_path, new_file_name))
                     shutil.copy(os.path.join(src_img_path, file_name), os.path.join(dest_img_path, new_file_name[:-5] + "_aug.jpeg"))
-                count += 1
 
     clear_output(wait=True)
     print("Running augments")
@@ -423,20 +436,18 @@ def AugmentImages(src: str = "../Data/Original/ds1/", dest: str ="../Data/Augmen
             totals[sub_folder]["original"] += len(os.listdir(dest_img_path)) - num_files
             totals[sub_folder]["augmented"] += num_files
             totals[sub_folder]["running_total"] += totals[sub_folder]["augmented"] + totals[sub_folder]["original"]
-            count = 0
             for i, file_name in enumerate(dest_img_list):
-                if count % 100 == 0:
+                if i % 100 == 0 or i == num_files:
                     clear_output(wait=True)
-                    print(f"{count} / {num_files} | {dest_img_path} ({folder_count} / {folder_total})")
+                    print(f"{i} / {num_files} | {dest_img_path} ({folder_count} / {folder_total})")
                 data = tf.image.decode_jpeg(tf.io.read_file(dest_img_path + file_name))
-                ([
+                data = ([
                     lambda: tf.image.random_hue(data,0.5,seed),
                     lambda: tf.image.random_brightness(data,0.8,seed),
-                    lambda: tf.image.random_contrast(data,0.1,0.8,seed),
-                    lambda: tf.image.random_saturation(data,0.1,0.8,seed)
+                    lambda: tf.image.random_contrast(data,0.2,0.8,seed),
+                    lambda: tf.image.random_saturation(data,0.2,0.8,seed)
                 ])[((random.randomint(0,4) if seed != None else 0) + i) % 4]()
                 tf.keras.utils.save_img(dest_img_path + file_name[:-5] + ".jpeg", data)
-                count += 1
             folder_count += 1
     totals["totals"] = {}
     totals["totals"]["original"] = sum([totals[t]["original"] for t in ["Train", "Test", "Validation"]])
